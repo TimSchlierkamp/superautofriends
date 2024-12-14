@@ -2,58 +2,64 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * CLI für das Spiel. Hier wird zwischen Host und Client unterschieden.
+ * Host ruft lobbyHost auf, Client ruft lobbyJoin auf.
+ */
 public class Cli {
     private ShopBackend shopBackend;
     private Scanner scanner;
-    private String lobbyName;
+    private NetworkLobbyManager networkLobbyManager;
     private String playerName;
-    private LobbyManager lobbyManager;
 
     public Cli() {
         this.shopBackend = new ShopBackend(10, 10, 1, 0);
         this.scanner = new Scanner(System.in);
+        this.networkLobbyManager = new NetworkLobbyManager();
 
-        List<Friends> initialFreunde = new ArrayList<>();
-        initialFreunde.add(generateDemoFriend("Schlierkamp"));
-        initialFreunde.add(generateDemoFriend("Blankenstein"));
-        initialFreunde.add(generateDemoFriend("Pieper"));
+        // Initiale Shop Items
+        List<Friends> initialTiere = new ArrayList<>();
+        initialTiere.add(generateDemoFriend("Schlierie"));
+        initialTiere.add(generateDemoFriend("Blanki"));
+        initialTiere.add(generateDemoFriend("Schlierie"));
 
         List<Essen> initialEssen = new ArrayList<>();
         initialEssen.add(generateDemoEssen());
         initialEssen.add(generateDemoEssen());
 
-        shopBackend.setShopFreunde(initialFreunde);
+        shopBackend.setShopTiere(initialTiere);
         shopBackend.setShopEssen(initialEssen);
     }
 
     public void lobby() {
         System.out.println("Super Auto Friends Lobby");
-        System.out.print("Bitte geben Sie einen Lobby-Namen ein: ");
-        this.lobbyName = scanner.nextLine();
-        this.lobbyManager = new LobbyManager(lobbyName);
+        System.out.print("Bist du Host (h) oder Client (c)? ");
+        String role = scanner.nextLine();
 
         System.out.print("Bitte geben Sie Ihren Spielernamen ein: ");
         this.playerName = scanner.nextLine();
 
         try {
-            if (!lobbyManager.lobbyExists()) {
-                lobbyManager.createLobby(playerName);
+            if (role.equalsIgnoreCase("h")) {
+                System.out.print("Auf welchem Port soll gehostet werden? ");
+                int port = Integer.parseInt(scanner.nextLine());
+                networkLobbyManager.lobbyHost(port, playerName);
             } else {
-                lobbyManager.joinLobby(playerName);
+                System.out.print("Bitte IP des Hosts eingeben: ");
+                String hostIP = scanner.nextLine();
+                System.out.print("Bitte Port des Hosts eingeben: ");
+                int port = Integer.parseInt(scanner.nextLine());
+                networkLobbyManager.lobbyJoin(hostIP, port, playerName);
             }
-
             // Spieler ist ready
-            lobbyManager.setPlayerReady(playerName, true);
-            System.out.println("Lobby '" + this.lobbyName + "' betreten. Warte auf genügend Spieler...");
-
-            // Warte bis mindestens 2 Spieler bereit und Phase != WAITING
-            while (!lobbyManager.getGamePhase().equals("BUY")) {
-                // Spiel startet erst, wenn mindestens 2 Spieler da und alle ready.
-                Thread.sleep(1000);
+            networkLobbyManager.setPlayerReady(playerName, true);
+            System.out.println("Warte, bis Spiel beginnt (mind. 2 Spieler müssen bereit sein)...");
+            // Warte bis BUY Phase erreicht ist
+            while (!networkLobbyManager.getGamePhase().equals("BUY")) {
+                networkLobbyManager.waitForUpdate();
+                Thread.sleep(500);
             }
-
-            System.out.println("Alle Spieler sind bereit! Spiel beginnt mit der Kaufphase.");
-
+            System.out.println("Spiel startet in Kaufphase!");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -64,13 +70,13 @@ public class Cli {
         boolean running = true;
         while (running) {
             try {
-                // Warte bis Phase BUY
-                while (!lobbyManager.getGamePhase().equals("BUY")) {
-                    System.out.println("Warte auf Start der Kaufphase...");
-                    Thread.sleep(1000);
+                // Warte bis BUY Phase
+                while (!networkLobbyManager.getGamePhase().equals("BUY")) {
+                    networkLobbyManager.waitForUpdate();
+                    Thread.sleep(500);
                 }
 
-                // Jede Runde Gold zurücksetzen
+                // Gold auf 10
                 shopBackend.setGold(10);
 
                 System.out.println("Aktuelle Runde: " + shopBackend.getRunde() + " | Gold: " + shopBackend.getGold() +
@@ -79,48 +85,44 @@ public class Cli {
                 startBuyPhase();
 
                 if (shopBackend.getTeam().isEmpty()) {
-                    System.out.println("Keine Freunde im Team! Spiel Ende.");
+                    System.out.println("Keine Tiere im Team! Spiel Ende.");
                     running = false;
                     break;
                 }
 
-                // Nach Ende der Kaufphase warten, bis alle buyPhaseDone
-                lobbyManager.setPlayerBuyPhaseDone(playerName, true);
-                System.out.println("Warte, bis alle Spieler ihre Kaufphase beendet haben...");
-                while (!lobbyManager.allBuyPhaseDone()) {
-                    Thread.sleep(1000);
-                }
-
-                // Alle sind fertig mit Kaufphase, wechsle in FIGHT Phase
-                // In einer echten Umgebung würde man prüfen, ob man "Host" ist. Hier setzen wir es einfach direkt:
-                lobbyManager.setGamePhase("FIGHT");
-
-                // Warte bis Phase FIGHT
-                while (!lobbyManager.getGamePhase().equals("FIGHT")) {
+                // Kaufphase beendet
+                networkLobbyManager.setPlayerBuyPhaseDone(playerName, true);
+                System.out.println("Warte, bis alle Spieler fertig sind...");
+                while (!networkLobbyManager.allBuyPhaseDone()) {
+                    networkLobbyManager.waitForUpdate();
                     Thread.sleep(500);
                 }
 
-                startFightPhase(generateEnemyTeam()); 
+                // Alle fertig -> FIGHT
+                networkLobbyManager.setGamePhase("FIGHT");
+                while (!networkLobbyManager.getGamePhase().equals("FIGHT")) {
+                    networkLobbyManager.waitForUpdate();
+                    Thread.sleep(500);
+                }
 
-                // Nach Kampf wieder in BUY für nächste Runde
-                // Setze alle buyPhaseDone zurück
-                lobbyManager.resetBuyPhaseDone();
-                // Erhöhe Runde im Backend
+                startFightPhase(generateEnemyTeam());
+
+                // Nach Kampf wieder zurück zu BUY Phase, nächste Runde
+                networkLobbyManager.resetBuyPhaseDone();
                 shopBackend = new ShopBackend(shopBackend.getGold(), shopBackend.getLeben(), shopBackend.getRunde() + 1, shopBackend.getWins());
                 shopBackend.setGold(10);
 
-                // Neue Items für nächste Runde
-                shopBackend.setShopFreunde(generateNewFreunde());
+                shopBackend.setShopTiere(generateNewTiere());
                 shopBackend.setShopEssen(generateNewEssen());
 
-                // Setze Phase zurück auf BUY
-                lobbyManager.setGamePhase("BUY");
+                networkLobbyManager.setGamePhase("BUY");
 
                 System.out.println("Nächste Runde starten? (j/n)");
                 String input = scanner.nextLine();
                 if (!input.equalsIgnoreCase("j")) {
                     running = false;
                 }
+
             } catch (Exception e) {
                 e.printStackTrace();
                 running = false;
@@ -131,19 +133,6 @@ public class Cli {
 
     private void startBuyPhase() {
         System.out.println("----- KAUFPHASE -----");
-        try {
-            // Warte, bis es dein Zug ist. (Optional, wenn man Rundenbasiertes Kaufen will)
-            // Für dieses Beispiel können alle gleichzeitig in der Kaufphase agieren, da nur final buyPhaseDone zählt.
-            // Wenn man Turn-basierte Kaufphase will, entkommenFreunden:
-            // while (!lobbyManager.isMyTurn(playerName)) {
-            //    System.out.println("Warte auf deinen Zug in der Kaufphase...");
-            //    Thread.sleep(1000);
-            // }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         boolean inBuyPhase = true;
         while (inBuyPhase) {
             printShopStatus();
@@ -151,8 +140,8 @@ public class Cli {
 
             System.out.println("Aktionen:");
             System.out.println("[1] Würfeln (Kosten: 1 Gold)");
-            System.out.println("[2] Freund kaufen (Kosten: 3 Gold)");
-            System.out.println("[3] Freund verkaufen (+1 Gold)");
+            System.out.println("[2] Tier kaufen (Kosten: 3 Gold)");
+            System.out.println("[3] Tier verkaufen (+1 Gold)");
             System.out.println("[4] Essen kaufen (Kosten: 3 Gold)");
             System.out.println("[5] Einfrieren");
             System.out.println("[6] Kaufphase beenden");
@@ -163,32 +152,31 @@ public class Cli {
                     shopBackend.rerollShop();
                     break;
                 case "2":
-                    System.out.println("Welchen Freund kaufen? (Index ab 0)");
-                    int FreundIndex = readInt();
-                    shopBackend.buyFriend(FreundIndex);
+                    System.out.println("Welches Tier kaufen? (Index ab 0)");
+                    int tierIndex = readInt();
+                    shopBackend.buyFriend(tierIndex);
                     break;
                 case "3":
-                    System.out.println("Welchen Freund aus dem Team verkaufen? (Index ab 0)");
+                    System.out.println("Welches Tier aus dem Team verkaufen? (Index ab 0)");
                     int sellIndex = readInt();
                     shopBackend.sellFriend(sellIndex);
                     break;
                 case "4":
                     System.out.println("Welches Essen kaufen? (Index ab 0)");
                     int essenIndex = readInt();
-                    System.out.println("Welcher Freund soll das Essen erhalten? (Index ab 0)");
+                    System.out.println("Welches Tier soll das Essen erhalten? (Index ab 0)");
                     int teamIndex = readInt();
                     shopBackend.buyItem(essenIndex, teamIndex);
                     break;
                 case "5":
-                    System.out.println("Freund einfrieren? (Index ab 0, -1 wenn keins)");
-                    int freezeFreund = readInt();
+                    System.out.println("Tier einfrieren? (Index ab 0, -1 wenn keins)");
+                    int freezeTier = readInt();
                     System.out.println("Essen einfrieren? (Index ab 0, -1 wenn keins)");
                     int freezeEssen = readInt();
-                    shopBackend.freezeItem(freezeFreund, freezeEssen);
+                    shopBackend.freezeItem(freezeTier, freezeEssen);
                     break;
                 case "6":
                     inBuyPhase = false;
-                    // Hier setzen wir nicht turnWechsel, da alle gleichzeitig beenden können.
                     break;
                 default:
                     System.out.println("Ungültige Aktion.");
@@ -199,31 +187,22 @@ public class Cli {
 
     private void startFightPhase(List<Friends> enemyTeam) {
         System.out.println("----- KAMPFPHASE -----");
-        // Alle führen Kampf lokal aus. In echtem Multiplayer müsste man das synchronisieren.
         FightBackend fightBackend = new FightBackend(shopBackend.getTeam(), enemyTeam);
         String result = fightBackend.startFight();
         System.out.println("Kampfergebnis: " + result);
         if (result.equals("A gewinnt")) {
-            incrementWins();
+            shopBackend = new ShopBackend(shopBackend.getGold(), shopBackend.getLeben(), shopBackend.getRunde(), shopBackend.getWins() + 1);
         } else if (result.equals("B gewinnt")) {
-            decrementLeben();
+            shopBackend = new ShopBackend(shopBackend.getGold(), shopBackend.getLeben() - 1, shopBackend.getRunde(), shopBackend.getWins());
         }
-    }
-
-    private void incrementWins() {
-        shopBackend = new ShopBackend(shopBackend.getGold(), shopBackend.getLeben(), shopBackend.getRunde(), shopBackend.getWins() + 1);
-    }
-
-    private void decrementLeben() {
-        shopBackend = new ShopBackend(shopBackend.getGold(), shopBackend.getLeben() - 1, shopBackend.getRunde(), shopBackend.getWins());
     }
 
     private void printShopStatus() {
         System.out.println("** SHOP **");
-        System.out.println("Freunde:");
-        List<Friends> shopFreunde = shopBackend.getShopFreunde();
-        for (int i = 0; i < shopFreunde.size(); i++) {
-            Friends f = shopFreunde.get(i);
+        System.out.println("Tiere:");
+        List<Friends> shopTiere = shopBackend.getShopTiere();
+        for (int i = 0; i < shopTiere.size(); i++) {
+            Friends f = shopTiere.get(i);
             if (f != null) {
                 System.out.println("[" + i + "]: " + f.getName() + " (L:" + f.getLeben() + ", S:" + f.getSchaden() + ")");
             } else {
@@ -271,7 +250,6 @@ public class Cli {
     }
 
     private List<Friends> generateEnemyTeam() {
-        // Gegnerteam generieren - in echt müsste man hier andere Spieler abbilden.
         List<Friends> enemyTeam = new ArrayList<>();
         enemyTeam.add(generateDemoFriend("Schlierie"));
         enemyTeam.add(generateDemoFriend("Blanki"));
@@ -279,12 +257,12 @@ public class Cli {
         return enemyTeam;
     }
 
-    private List<Friends> generateNewFreunde() {
-        List<Friends> newFreunde = new ArrayList<>();
-        newFreunde.add(generateDemoFriend("Schlierie"));
-        newFreunde.add(generateDemoFriend("Blanki"));
-        newFreunde.add(generateDemoFriend("Schlierie"));
-        return newFreunde;
+    private List<Friends> generateNewTiere() {
+        List<Friends> newTiere = new ArrayList<>();
+        newTiere.add(generateDemoFriend("Schlierie"));
+        newTiere.add(generateDemoFriend("Blanki"));
+        newTiere.add(generateDemoFriend("Schlierie"));
+        return newTiere;
     }
 
     private List<Essen> generateNewEssen() {
