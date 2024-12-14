@@ -1,4 +1,3 @@
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -16,15 +15,12 @@ public class ShopBackend {
     private static final int MAX_TEAM_SIZE = 5;
     private static final int REROLL_COST = 1;
     private static final int BUY_FRIEND_COST = 3;
-    // Die tatsächliche Kosten für den Verkauf oder andere Aktionen könnten variieren.
-    // Hier wird angenommen, dass beim Verkauf eines Tieres Gold = Level (oder ein fixer Wert) gutgeschrieben wird.
-    // Level ist aktuell nicht in Friends definiert. Man könnte Level separat tracken.
     
-    private List<Friends> team;           // Kampf-Setup des Spielers (max 5 Tiere)
-    private List<Friends> shopTiere;      // Verfügbare Tiere im Shop
-    private List<Essen> shopEssen;        // Verfügbares Essen im Shop
-    private List<Boolean> shopTiereGefroren; // Welche Tiere im Shop sind eingefroren
-    private List<Boolean> shopEssenGefroren; // Welche Essen im Shop sind eingefroren
+    private List<Friends> team;           
+    private List<Friends> shopTiere;      
+    private List<Essen> shopEssen;        
+    private List<Boolean> shopTiereGefroren;
+    private List<Boolean> shopEssenGefroren;
 
     public ShopBackend(int startGold, int startLeben, int startRunde, int startWins) {
         this.gold = startGold;
@@ -38,17 +34,12 @@ public class ShopBackend {
         this.shopEssenGefroren = new ArrayList<>();
     }
 
-    /**
-     * Aktualisiert den Shop mit neuen Tieren und Essen, außer die, die eingefroren sind.
-     * Kostet den Spieler REROLL_COST Gold.
-     */
     public void rerollShop() {
         if (gold < REROLL_COST) {
             System.out.println("Nicht genug Gold zum Würfeln!");
             return;
         }
         gold -= REROLL_COST;
-        // Nur die nicht-gefrorenen Slots neu füllen
         for (int i = 0; i < shopTiere.size(); i++) {
             if (!shopTiereGefroren.get(i)) {
                 shopTiere.set(i, generateRandomFriend());
@@ -61,11 +52,6 @@ public class ShopBackend {
         }
     }
 
-    /**
-     * Kauft ein Tier aus dem Shop und fügt es dem Team hinzu, falls Platz.
-     * Kostet den Spieler BUY_FRIEND_COST Gold.
-     * @param index Index des Tieres im Shop
-     */
     public void buyFriend(int index) {
         if (index < 0 || index >= shopTiere.size()) {
             System.out.println("Ungültiger Index.");
@@ -86,16 +72,9 @@ public class ShopBackend {
         }
         gold -= BUY_FRIEND_COST;
         team.add(chosenFriend);
-        // Entferne das Tier aus dem Shop, der Slot könnte beim nächsten Reroll neu befüllt werden
         shopTiere.set(index, null);
     }
 
-    /**
-     * Verkauft ein Tier aus dem Team.
-     * Gibt dem Spieler Gold zurück (z. B. in Höhe des 'Levels' des Tieres).
-     * Da Level nicht definiert ist, wird hier fiktiv 1 als Rückgabewert genommen.
-     * @param index Index des Tieres im Team
-     */
     public void sellFriend(int index) {
         if (index < 0 || index >= team.size()) {
             System.out.println("Ungültiger Index im Team.");
@@ -106,16 +85,10 @@ public class ShopBackend {
             System.out.println("Kein Tier an dieser Position.");
             return;
         }
-        // Beispielhaftes Gold-Refund: 1 Gold pro Verkauf
-        gold += 1;
+        gold += 1; // Beispielhaftes Gold-Refund
         team.remove(index);
     }
 
-    /**
-     * Friert ein Tier oder Essen im Shop ein, damit es beim nächsten Würfeln nicht ersetzt wird.
-     * @param tierIndex Index des Tieres (wenn -1, dann ignorieren)
-     * @param essenIndex Index des Essens (wenn -1, dann ignorieren)
-     */
     public void freezeItem(int tierIndex, int essenIndex) {
         if (tierIndex >= 0 && tierIndex < shopTiereGefroren.size()) {
             shopTiereGefroren.set(tierIndex, true);
@@ -125,13 +98,6 @@ public class ShopBackend {
         }
     }
 
-    /**
-     * Kauft ein Essen und verwendet es auf einem Freund im Team.
-     * Dies könnte z. B. Schaden und Leben erhöhen.
-     * Die Kosten für Essen sind nicht definiert, nehmen wir an Kosten = 3 Gold.
-     * @param essenIndex Index des Essens im Shop
-     * @param teamIndex Index des Tieres im Team
-     */
     public void buyItem(int essenIndex, int teamIndex) {
         if (essenIndex < 0 || essenIndex >= shopEssen.size()) {
             System.out.println("Ungültiger Essens-Index.");
@@ -141,7 +107,7 @@ public class ShopBackend {
             System.out.println("Ungültiger Tier-Index im Team.");
             return;
         }
-        if (gold < BUY_FRIEND_COST) { // hier z.B. gleiche Kosten wie Tier kaufen
+        if (gold < BUY_FRIEND_COST) {
             System.out.println("Nicht genug Gold, um das Essen zu kaufen!");
             return;
         }
@@ -153,13 +119,10 @@ public class ShopBackend {
         }
 
         Friends target = team.get(teamIndex);
-        // Wende Effekte an
         target.setLeben(target.getLeben() + chosenEssen.getLebensEffekt());
         target.setSchaden(target.getSchaden() + chosenEssen.getSchadensEffekt());
-        // Effekte mit beschwoerenEffekt (wenn vorhanden) könnten zusätzliche Logik erfordern
 
         gold -= BUY_FRIEND_COST;
-        // Entferne das Essen aus dem Shop
         shopEssen.set(essenIndex, null);
     }
 
@@ -192,7 +155,7 @@ public class ShopBackend {
     }
 
     public void setShopTiere(List<Friends> shopTiere) {
-        this.shopTiere = shopTiere;
+        this.shopTiere = new ArrayList<>(shopTiere);
         this.shopTiereGefroren.clear();
         for (int i = 0; i < shopTiere.size(); i++) {
             shopTiereGefroren.add(false);
@@ -200,19 +163,14 @@ public class ShopBackend {
     }
 
     public void setShopEssen(List<Essen> shopEssen) {
-        this.shopEssen = shopEssen;
+        this.shopEssen = new ArrayList<>(shopEssen);
         this.shopEssenGefroren.clear();
         for (int i = 0; i < shopEssen.size(); i++) {
             shopEssenGefroren.add(false);
         }
     }
 
-    /**
-     * Hilfsmethode zum Generieren zufälliger Tiere für das Shop-Angebot.
-     */
     private Friends generateRandomFriend() {
-        // Hier könnte man aus einem Pool von Tieren zufällig wählen
-        // Beispiel:
         String[] namen = {"Ameise", "Fisch", "Biber"};
         Random rand = new Random();
         String name = namen[rand.nextInt(namen.length)];
@@ -222,14 +180,15 @@ public class ShopBackend {
         return new GenericFriend(name, leben, schaden, effekt);
     }
 
-    /**
-     * Hilfsmethode zum Generieren zufälligen Essens für das Shop-Angebot.
-     */
     private Essen generateRandomEssen() {
         Random rand = new Random();
-        int lebensEffekt = rand.nextInt(2) + 1; // +1 oder +2 Leben
-        int schadensEffekt = rand.nextInt(2) + 1; // +1 oder +2 Schaden
-        String beschwoeren = ""; // kein spezieller Effekt
+        int lebensEffekt = rand.nextInt(2) + 1; 
+        int schadensEffekt = rand.nextInt(2) + 1; 
+        String beschwoeren = ""; 
         return new BasicEssen(lebensEffekt, schadensEffekt, beschwoeren);
+    }
+
+    public void setGold(int gold) {
+        this.gold = gold;
     }
 }
