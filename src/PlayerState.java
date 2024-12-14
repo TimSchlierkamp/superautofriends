@@ -19,6 +19,7 @@ public class PlayerState {
 
     public void setReady(boolean ready) {
         this.ready = ready;
+        System.out.println("Player '" + playerName + "' set to ready: " + ready);
     }
 
     public boolean isBuyPhaseDone() {
@@ -27,5 +28,6 @@ public class PlayerState {
 
     public void setBuyPhaseDone(boolean buyPhaseDone) {
         this.buyPhaseDone = buyPhaseDone;
+        System.out.println("Player '" + playerName + "' buyPhaseDone: " + buyPhaseDone);
     }
 }

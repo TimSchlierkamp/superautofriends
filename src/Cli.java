@@ -2,10 +2,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-/**
- * CLI für das Spiel. Hier wird zwischen Host und Client unterschieden.
- * Host ruft lobbyHost auf, Client ruft lobbyJoin auf.
- */
 public class Cli {
     private ShopBackend shopBackend;
     private Scanner scanner;
@@ -54,12 +50,14 @@ public class Cli {
             // Spieler ist ready
             networkLobbyManager.setPlayerReady(playerName, true);
             System.out.println("Warte, bis Spiel beginnt (mind. 2 Spieler müssen bereit sein)...");
+
             // Warte bis BUY Phase erreicht ist
             while (!networkLobbyManager.getGamePhase().equals("BUY")) {
                 networkLobbyManager.waitForUpdate();
                 Thread.sleep(500);
             }
             System.out.println("Spiel startet in Kaufphase!");
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -76,9 +74,8 @@ public class Cli {
                     Thread.sleep(500);
                 }
 
-                // Gold auf 10
+                // Jede Runde Gold zurücksetzen
                 shopBackend.setGold(10);
-
                 System.out.println("Aktuelle Runde: " + shopBackend.getRunde() + " | Gold: " + shopBackend.getGold() +
                                    " | Leben: " + shopBackend.getLeben() + " | Wins: " + shopBackend.getWins());
 
@@ -92,13 +89,13 @@ public class Cli {
 
                 // Kaufphase beendet
                 networkLobbyManager.setPlayerBuyPhaseDone(playerName, true);
-                System.out.println("Warte, bis alle Spieler fertig sind...");
+                System.out.println("Warte, bis alle Spieler ihre Kaufphase beendet haben...");
                 while (!networkLobbyManager.allBuyPhaseDone()) {
                     networkLobbyManager.waitForUpdate();
                     Thread.sleep(500);
                 }
 
-                // Alle fertig -> FIGHT
+                // Alle sind fertig mit Kaufphase, wechsle in FIGHT Phase
                 networkLobbyManager.setGamePhase("FIGHT");
                 while (!networkLobbyManager.getGamePhase().equals("FIGHT")) {
                     networkLobbyManager.waitForUpdate();
@@ -107,14 +104,16 @@ public class Cli {
 
                 startFightPhase(generateEnemyTeam());
 
-                // Nach Kampf wieder zurück zu BUY Phase, nächste Runde
+                // Nach Kampf wieder in BUY für nächste Runde
                 networkLobbyManager.resetBuyPhaseDone();
                 shopBackend = new ShopBackend(shopBackend.getGold(), shopBackend.getLeben(), shopBackend.getRunde() + 1, shopBackend.getWins());
                 shopBackend.setGold(10);
 
+                // Neue Items für nächste Runde
                 shopBackend.setShopTiere(generateNewTiere());
                 shopBackend.setShopEssen(generateNewEssen());
 
+                // Setze Phase zurück auf BUY
                 networkLobbyManager.setGamePhase("BUY");
 
                 System.out.println("Nächste Runde starten? (j/n)");
@@ -192,8 +191,12 @@ public class Cli {
         System.out.println("Kampfergebnis: " + result);
         if (result.equals("A gewinnt")) {
             shopBackend = new ShopBackend(shopBackend.getGold(), shopBackend.getLeben(), shopBackend.getRunde(), shopBackend.getWins() + 1);
+            System.out.println("Sie haben gewonnen! Wins: " + shopBackend.getWins());
         } else if (result.equals("B gewinnt")) {
             shopBackend = new ShopBackend(shopBackend.getGold(), shopBackend.getLeben() - 1, shopBackend.getRunde(), shopBackend.getWins());
+            System.out.println("Sie haben verloren! Leben: " + shopBackend.getLeben());
+        } else {
+            System.out.println("Das Spiel endet unentschieden!");
         }
     }
 
@@ -236,7 +239,7 @@ public class Cli {
             try {
                 return Integer.parseInt(input);
             } catch (NumberFormatException ex) {
-                System.out.println("Bitte eine Zahl eingeben!");
+                System.out.println("Bitte eine gültige Zahl eingeben!");
             }
         }
     }

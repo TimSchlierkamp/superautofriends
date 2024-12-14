@@ -7,7 +7,7 @@ class LobbyParsingUtil {
         int ps = trimmed.indexOf("\"players\":");
         int start = trimmed.indexOf("[", ps);
         int end = trimmed.indexOf("]", start);
-        String playersSection = trimmed.substring(start+1, end).trim();
+        String playersSection = trimmed.substring(start + 1, end).trim();
         List<PlayerState> players = new ArrayList<>();
         if (!playersSection.isEmpty()) {
             String[] ents = playersSection.split("\\},\\{");
@@ -21,6 +21,8 @@ class LobbyParsingUtil {
 
         String turn = parseStringField(trimmed, "turn");
         String gamePhase = parseStringField(trimmed, "gamePhase");
+
+        System.out.println("Parsed LobbyState: gamePhase=" + gamePhase + ", turn=" + turn + ", players=" + players.size());
 
         return new LobbyState(players, turn, gamePhase);
     }

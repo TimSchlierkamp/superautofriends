@@ -35,21 +35,26 @@ public class ShopBackend {
             return;
         }
         gold -= REROLL_COST;
+        System.out.println("Gold nach Würfeln: " + gold);
         for (int i = 0; i < shopTiere.size(); i++) {
             if (!shopTiereGefroren.get(i)) {
+                Friends old = shopTiere.get(i);
                 shopTiere.set(i, generateRandomFriend());
+                System.out.println("Shop Tier [" + i + "] ersetzt: " + old.getName() + " -> " + shopTiere.get(i).getName());
             }
         }
         for (int i = 0; i < shopEssen.size(); i++) {
             if (!shopEssenGefroren.get(i)) {
+                Essen old = shopEssen.get(i);
                 shopEssen.set(i, generateRandomEssen());
+                System.out.println("Shop Essen [" + i + "] ersetzt: +L:" + old.getLebensEffekt() + ", +S:" + old.getSchadensEffekt());
             }
         }
     }
 
     public void buyFriend(int index) {
         if (index < 0 || index >= shopTiere.size()) {
-            System.out.println("Ungültiger Index.");
+            System.out.println("Ungültiger Tier-Index.");
             return;
         }
         if (gold < BUY_FRIEND_COST) {
@@ -68,28 +73,32 @@ public class ShopBackend {
         gold -= BUY_FRIEND_COST;
         team.add(chosenFriend);
         shopTiere.set(index, null);
+        System.out.println("Gekauftes Tier: " + chosenFriend.getName() + ". Gold verbleibend: " + gold);
     }
 
     public void sellFriend(int index) {
         if (index < 0 || index >= team.size()) {
-            System.out.println("Ungültiger Index im Team.");
+            System.out.println("Ungültiger Team-Index.");
             return;
         }
         Friends toSell = team.get(index);
         if (toSell == null) {
-            System.out.println("Kein Tier an dieser Position.");
+            System.out.println("Kein Tier an dieser Stelle.");
             return;
         }
         gold += 1;
         team.remove(index);
+        System.out.println("Verkauftes Tier: " + toSell.getName() + ". Gold nach Verkauf: " + gold);
     }
 
     public void freezeItem(int tierIndex, int essenIndex) {
         if (tierIndex >= 0 && tierIndex < shopTiereGefroren.size()) {
             shopTiereGefroren.set(tierIndex, true);
+            System.out.println("Tier im Shop [" + tierIndex + "] eingefroren.");
         }
         if (essenIndex >= 0 && essenIndex < shopEssenGefroren.size()) {
             shopEssenGefroren.set(essenIndex, true);
+            System.out.println("Essen im Shop [" + essenIndex + "] eingefroren.");
         }
     }
 
@@ -99,7 +108,7 @@ public class ShopBackend {
             return;
         }
         if (teamIndex < 0 || teamIndex >= team.size()) {
-            System.out.println("Ungültiger Tier-Index im Team.");
+            System.out.println("Ungültiger Team-Index.");
             return;
         }
         if (gold < BUY_FRIEND_COST) {
@@ -109,7 +118,7 @@ public class ShopBackend {
 
         Essen chosenEssen = shopEssen.get(essenIndex);
         if (chosenEssen == null) {
-            System.out.println("Kein Essen in diesem Slot.");
+            System.out.println("Kein Essen im angegebenen Shop-Slot.");
             return;
         }
 
@@ -119,6 +128,7 @@ public class ShopBackend {
 
         gold -= BUY_FRIEND_COST;
         shopEssen.set(essenIndex, null);
+        System.out.println("Essen gekauft und angewendet auf " + target.getName() + ". Gold verbleibend: " + gold);
     }
 
     public int getGold() {
@@ -159,6 +169,7 @@ public class ShopBackend {
         for (int i = 0; i < shopTiere.size(); i++) {
             shopTiereGefroren.add(false);
         }
+        System.out.println("Shop-Tiere initialisiert.");
     }
 
     public void setShopEssen(List<Essen> shopEssen) {
@@ -167,6 +178,7 @@ public class ShopBackend {
         for (int i = 0; i < shopEssen.size(); i++) {
             shopEssenGefroren.add(false);
         }
+        System.out.println("Shop-Essen initialisiert.");
     }
 
     private Friends generateRandomFriend() {
@@ -185,5 +197,40 @@ public class ShopBackend {
         int schadensEffekt = rand.nextInt(2) + 1;
         String beschwoeren = "";
         return new BasicEssen(lebensEffekt, schadensEffekt, beschwoeren);
+    }
+
+    /**
+     * Druckt den aktuellen Shop-Status zur Debugging-Zwecken.
+     */
+    public void printShopStatus() {
+        System.out.println("----- Aktueller Shop-Status -----");
+        System.out.println("Gold: " + gold);
+        System.out.println("Leben: " + leben);
+        System.out.println("Runde: " + runde);
+        System.out.println("Wins: " + wins);
+        System.out.println("Team:");
+        for (int i = 0; i < team.size(); i++) {
+            Friends f = team.get(i);
+            System.out.println("[" + i + "]: " + f.getName() + " (L:" + f.getLeben() + ", S:" + f.getSchaden() + ")");
+        }
+        System.out.println("Shop-Tiere:");
+        for (int i = 0; i < shopTiere.size(); i++) {
+            Friends f = shopTiere.get(i);
+            if (f != null) {
+                System.out.println("[" + i + "]: " + f.getName() + " (L:" + f.getLeben() + ", S:" + f.getSchaden() + ")");
+            } else {
+                System.out.println("[" + i + "]: leer");
+            }
+        }
+        System.out.println("Shop-Essen:");
+        for (int i = 0; i < shopEssen.size(); i++) {
+            Essen e = shopEssen.get(i);
+            if (e != null) {
+                System.out.println("[" + i + "]: Essen (+L:" + e.getLebensEffekt() + ", +S:" + e.getSchadensEffekt() + ")");
+            } else {
+                System.out.println("[" + i + "]: leer");
+            }
+        }
+        System.out.println("---------------------------------");
     }
 }
