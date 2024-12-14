@@ -41,7 +41,4 @@ public abstract class Friends {
     public void setEffekt(String effekt) {
         this.effekt = effekt;
     }
-
-
-
 }
