@@ -3,7 +3,7 @@ public abstract class Friends {
     protected int leben;
     protected int schaden;
     protected String effekt;
-    
+
     public Friends(String name, int leben, int schaden, String effekt) {
         this.name = name;
         this.leben = leben;
