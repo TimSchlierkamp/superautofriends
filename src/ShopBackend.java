@@ -4,8 +4,8 @@ import java.util.Random;
 
 /**
  * Backend für das Kauf-Menü (Shop-Phase).
- * Hier werden alle Logiken für das Würfeln (Neuerstellen von Tieren im Shop),
- * Kaufen, Verkaufen, Einfrieren, sowie die Darstellung von Nutzer-Stats und Shop-Zonen implementiert.
+ * Hier werden alle Logiken für das Würfeln (Neuerstellen von Freunden im Shop),
+ * Kaufen, Verkaufen, Einfrieren, sowie die Darstellung von Nutzer-Stats und Shop-Zonen implemenFreundt.
  */
 public class ShopBackend {
     private int gold;
@@ -17,9 +17,9 @@ public class ShopBackend {
     private static final int BUY_FRIEND_COST = 3;
     
     private List<Friends> team;           
-    private List<Friends> shopTiere;      
+    private List<Friends> shopFreunde;      
     private List<Essen> shopEssen;        
-    private List<Boolean> shopTiereGefroren;
+    private List<Boolean> shopFreundeGefroren;
     private List<Boolean> shopEssenGefroren;
 
     public ShopBackend(int startGold, int startLeben, int startRunde, int startWins) {
@@ -28,9 +28,9 @@ public class ShopBackend {
         this.runde = startRunde;
         this.wins = startWins;
         this.team = new ArrayList<>();
-        this.shopTiere = new ArrayList<>();
+        this.shopFreunde = new ArrayList<>();
         this.shopEssen = new ArrayList<>();
-        this.shopTiereGefroren = new ArrayList<>();
+        this.shopFreundeGefroren = new ArrayList<>();
         this.shopEssenGefroren = new ArrayList<>();
     }
 
@@ -40,9 +40,9 @@ public class ShopBackend {
             return;
         }
         gold -= REROLL_COST;
-        for (int i = 0; i < shopTiere.size(); i++) {
-            if (!shopTiereGefroren.get(i)) {
-                shopTiere.set(i, generateRandomFriend());
+        for (int i = 0; i < shopFreunde.size(); i++) {
+            if (!shopFreundeGefroren.get(i)) {
+                shopFreunde.set(i, generateRandomFriend());
             }
         }
         for (int i = 0; i < shopEssen.size(); i++) {
@@ -53,26 +53,26 @@ public class ShopBackend {
     }
 
     public void buyFriend(int index) {
-        if (index < 0 || index >= shopTiere.size()) {
+        if (index < 0 || index >= shopFreunde.size()) {
             System.out.println("Ungültiger Index.");
             return;
         }
         if (gold < BUY_FRIEND_COST) {
-            System.out.println("Nicht genug Gold, um das Tier zu kaufen!");
+            System.out.println("Nicht genug Gold, um das Freund zu kaufen!");
             return;
         }
         if (team.size() >= MAX_TEAM_SIZE) {
             System.out.println("Team ist bereits voll!");
             return;
         }
-        Friends chosenFriend = shopTiere.get(index);
+        Friends chosenFriend = shopFreunde.get(index);
         if (chosenFriend == null) {
-            System.out.println("Kein Tier im angegebenen Shop-Slot.");
+            System.out.println("Kein Freund im angegebenen Shop-Slot.");
             return;
         }
         gold -= BUY_FRIEND_COST;
         team.add(chosenFriend);
-        shopTiere.set(index, null);
+        shopFreunde.set(index, null);
     }
 
     public void sellFriend(int index) {
@@ -82,16 +82,16 @@ public class ShopBackend {
         }
         Friends toSell = team.get(index);
         if (toSell == null) {
-            System.out.println("Kein Tier an dieser Position.");
+            System.out.println("Kein Freund an dieser Position.");
             return;
         }
         gold += 1; // Beispielhaftes Gold-Refund
         team.remove(index);
     }
 
-    public void freezeItem(int tierIndex, int essenIndex) {
-        if (tierIndex >= 0 && tierIndex < shopTiereGefroren.size()) {
-            shopTiereGefroren.set(tierIndex, true);
+    public void freezeItem(int FreundIndex, int essenIndex) {
+        if (FreundIndex >= 0 && FreundIndex < shopFreundeGefroren.size()) {
+            shopFreundeGefroren.set(FreundIndex, true);
         }
         if (essenIndex >= 0 && essenIndex < shopEssenGefroren.size()) {
             shopEssenGefroren.set(essenIndex, true);
@@ -104,7 +104,7 @@ public class ShopBackend {
             return;
         }
         if (teamIndex < 0 || teamIndex >= team.size()) {
-            System.out.println("Ungültiger Tier-Index im Team.");
+            System.out.println("Ungültiger Freund-Index im Team.");
             return;
         }
         if (gold < BUY_FRIEND_COST) {
@@ -146,19 +146,19 @@ public class ShopBackend {
         return team;
     }
 
-    public List<Friends> getShopTiere() {
-        return shopTiere;
+    public List<Friends> getShopFreunde() {
+        return shopFreunde;
     }
 
     public List<Essen> getShopEssen() {
         return shopEssen;
     }
 
-    public void setShopTiere(List<Friends> shopTiere) {
-        this.shopTiere = new ArrayList<>(shopTiere);
-        this.shopTiereGefroren.clear();
-        for (int i = 0; i < shopTiere.size(); i++) {
-            shopTiereGefroren.add(false);
+    public void setShopFreunde(List<Friends> shopFreunde) {
+        this.shopFreunde = new ArrayList<>(shopFreunde);
+        this.shopFreundeGefroren.clear();
+        for (int i = 0; i < shopFreunde.size(); i++) {
+            shopFreundeGefroren.add(false);
         }
     }
 
@@ -171,7 +171,7 @@ public class ShopBackend {
     }
 
     private Friends generateRandomFriend() {
-        String[] namen = {"Ameise", "Fisch", "Biber"};
+        String[] namen = {"Töpfer", "Feldmann", "Müller", "Köppler", "Heine", "Siebert"};
         Random rand = new Random();
         String name = namen[rand.nextInt(namen.length)];
         int leben = rand.nextInt(3) + 1;

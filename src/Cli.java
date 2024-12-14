@@ -13,16 +13,16 @@ public class Cli {
         this.shopBackend = new ShopBackend(10, 10, 1, 0);
         this.scanner = new Scanner(System.in);
 
-        List<Friends> initialTiere = new ArrayList<>();
-        initialTiere.add(generateDemoFriend("Schlierie"));
-        initialTiere.add(generateDemoFriend("Blanki"));
-        initialTiere.add(generateDemoFriend("Schlierie"));
+        List<Friends> initialFreunde = new ArrayList<>();
+        initialFreunde.add(generateDemoFriend("Schlierkamp"));
+        initialFreunde.add(generateDemoFriend("Blankenstein"));
+        initialFreunde.add(generateDemoFriend("Pieper"));
 
         List<Essen> initialEssen = new ArrayList<>();
         initialEssen.add(generateDemoEssen());
         initialEssen.add(generateDemoEssen());
 
-        shopBackend.setShopTiere(initialTiere);
+        shopBackend.setShopFreunde(initialFreunde);
         shopBackend.setShopEssen(initialEssen);
     }
 
@@ -79,7 +79,7 @@ public class Cli {
                 startBuyPhase();
 
                 if (shopBackend.getTeam().isEmpty()) {
-                    System.out.println("Keine Tiere im Team! Spiel Ende.");
+                    System.out.println("Keine Freunde im Team! Spiel Ende.");
                     running = false;
                     break;
                 }
@@ -110,7 +110,7 @@ public class Cli {
                 shopBackend.setGold(10);
 
                 // Neue Items für nächste Runde
-                shopBackend.setShopTiere(generateNewTiere());
+                shopBackend.setShopFreunde(generateNewFreunde());
                 shopBackend.setShopEssen(generateNewEssen());
 
                 // Setze Phase zurück auf BUY
@@ -134,7 +134,7 @@ public class Cli {
         try {
             // Warte, bis es dein Zug ist. (Optional, wenn man Rundenbasiertes Kaufen will)
             // Für dieses Beispiel können alle gleichzeitig in der Kaufphase agieren, da nur final buyPhaseDone zählt.
-            // Wenn man Turn-basierte Kaufphase will, entkommentieren:
+            // Wenn man Turn-basierte Kaufphase will, entkommenFreunden:
             // while (!lobbyManager.isMyTurn(playerName)) {
             //    System.out.println("Warte auf deinen Zug in der Kaufphase...");
             //    Thread.sleep(1000);
@@ -151,8 +151,8 @@ public class Cli {
 
             System.out.println("Aktionen:");
             System.out.println("[1] Würfeln (Kosten: 1 Gold)");
-            System.out.println("[2] Tier kaufen (Kosten: 3 Gold)");
-            System.out.println("[3] Tier verkaufen (+1 Gold)");
+            System.out.println("[2] Freund kaufen (Kosten: 3 Gold)");
+            System.out.println("[3] Freund verkaufen (+1 Gold)");
             System.out.println("[4] Essen kaufen (Kosten: 3 Gold)");
             System.out.println("[5] Einfrieren");
             System.out.println("[6] Kaufphase beenden");
@@ -163,28 +163,28 @@ public class Cli {
                     shopBackend.rerollShop();
                     break;
                 case "2":
-                    System.out.println("Welches Tier kaufen? (Index ab 0)");
-                    int tierIndex = readInt();
-                    shopBackend.buyFriend(tierIndex);
+                    System.out.println("Welchen Freund kaufen? (Index ab 0)");
+                    int FreundIndex = readInt();
+                    shopBackend.buyFriend(FreundIndex);
                     break;
                 case "3":
-                    System.out.println("Welches Tier aus dem Team verkaufen? (Index ab 0)");
+                    System.out.println("Welchen Freund aus dem Team verkaufen? (Index ab 0)");
                     int sellIndex = readInt();
                     shopBackend.sellFriend(sellIndex);
                     break;
                 case "4":
                     System.out.println("Welches Essen kaufen? (Index ab 0)");
                     int essenIndex = readInt();
-                    System.out.println("Welches Tier soll das Essen erhalten? (Index ab 0)");
+                    System.out.println("Welcher Freund soll das Essen erhalten? (Index ab 0)");
                     int teamIndex = readInt();
                     shopBackend.buyItem(essenIndex, teamIndex);
                     break;
                 case "5":
-                    System.out.println("Tier einfrieren? (Index ab 0, -1 wenn keins)");
-                    int freezeTier = readInt();
+                    System.out.println("Freund einfrieren? (Index ab 0, -1 wenn keins)");
+                    int freezeFreund = readInt();
                     System.out.println("Essen einfrieren? (Index ab 0, -1 wenn keins)");
                     int freezeEssen = readInt();
-                    shopBackend.freezeItem(freezeTier, freezeEssen);
+                    shopBackend.freezeItem(freezeFreund, freezeEssen);
                     break;
                 case "6":
                     inBuyPhase = false;
@@ -220,10 +220,10 @@ public class Cli {
 
     private void printShopStatus() {
         System.out.println("** SHOP **");
-        System.out.println("Tiere:");
-        List<Friends> shopTiere = shopBackend.getShopTiere();
-        for (int i = 0; i < shopTiere.size(); i++) {
-            Friends f = shopTiere.get(i);
+        System.out.println("Freunde:");
+        List<Friends> shopFreunde = shopBackend.getShopFreunde();
+        for (int i = 0; i < shopFreunde.size(); i++) {
+            Friends f = shopFreunde.get(i);
             if (f != null) {
                 System.out.println("[" + i + "]: " + f.getName() + " (L:" + f.getLeben() + ", S:" + f.getSchaden() + ")");
             } else {
@@ -279,12 +279,12 @@ public class Cli {
         return enemyTeam;
     }
 
-    private List<Friends> generateNewTiere() {
-        List<Friends> newTiere = new ArrayList<>();
-        newTiere.add(generateDemoFriend("Schlierie"));
-        newTiere.add(generateDemoFriend("Blanki"));
-        newTiere.add(generateDemoFriend("Schlierie"));
-        return newTiere;
+    private List<Friends> generateNewFreunde() {
+        List<Friends> newFreunde = new ArrayList<>();
+        newFreunde.add(generateDemoFriend("Schlierie"));
+        newFreunde.add(generateDemoFriend("Blanki"));
+        newFreunde.add(generateDemoFriend("Schlierie"));
+        return newFreunde;
     }
 
     private List<Essen> generateNewEssen() {

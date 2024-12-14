@@ -3,8 +3,8 @@ import java.util.List;
 /**
  * Backend für das Kampf-Menü (Fight-Phase).
  * Hier wird ein 5-gegen-5 Kampf simuliert.
- * Das vorderste Tier jedes Teams tritt gegeneinander an und es wird so lange gekämpft,
- * bis ein Team keine Tiere mehr hat.
+ * Das vorderste Freund jedes Teams tritt gegeneinander an und es wird so lange gekämpft,
+ * bis ein Team keine Freunde mehr hat.
  */
 public class FightBackend {
     private List<Friends> teamA;
@@ -20,25 +20,25 @@ public class FightBackend {
      * Gibt am Ende den Ausgang des Kampfes zurück: "A gewinnt", "B gewinnt" oder "Unentschieden"
      */
     public String startFight() {
-        // Es wird angenommen, dass beide Teams bis zu 5 Tiere haben
+        // Es wird angenommen, dass beide Teams bis zu 5 Freunde haben
         while (!teamA.isEmpty() && !teamB.isEmpty()) {
             Friends frontA = teamA.get(0);
             Friends frontB = teamB.get(0);
 
-            // Beide Tiere fügen sich gegenseitig Schaden zu
+            // Beide Freunde fügen sich gegenseitig Schaden zu
             frontA.setLeben(frontA.getLeben() - frontB.getSchaden());
             frontB.setLeben(frontB.getLeben() - frontA.getSchaden());
 
-            // Prüfe ob Tiere gestorben sind
+            // Prüfe ob Freunde gestorben sind
             if (frontA.getLeben() <= 0 && frontB.getLeben() <= 0) {
                 // Beide sterben
                 teamA.remove(0);
                 teamB.remove(0);
             } else if (frontA.getLeben() <= 0) {
-                // Tier A stirbt
+                // Freund A stirbt
                 teamA.remove(0);
             } else if (frontB.getLeben() <= 0) {
-                // Tier B stirbt
+                // Freund B stirbt
                 teamB.remove(0);
             }
             // Falls beide überleben, geht es in die nächste Runde.
@@ -56,7 +56,7 @@ public class FightBackend {
 
 
 /**
- * Ein generisches Friend-Objekt, um ein konkretes Tier zu erstellen.
+ * Ein generisches Friend-Objekt, um ein konkretes Freund zu erstellen.
  */
 class GenericFriend extends Friends {
     public GenericFriend(String name, int leben, int schaden, String effekt) {

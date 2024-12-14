@@ -147,7 +147,7 @@ public class LobbyManager {
 
     private LobbyState readLobbyState() throws IOException {
         if (!lobbyFile.exists()) {
-            throw new IOException("Lobby-Datei existiert nicht.");
+            throw new IOException("Lobby-Datei exisFreundt nicht.");
         }
         try (BufferedReader br = new BufferedReader(new FileReader(lobbyFile))) {
             StringBuilder sb = new StringBuilder();
