@@ -201,27 +201,7 @@ public class Cli {
     }
 
     private void printShopStatus() {
-        System.out.println("** SHOP **");
-        System.out.println("Tiere:");
-        List<Friends> shopTiere = shopBackend.getShopTiere();
-        for (int i = 0; i < shopTiere.size(); i++) {
-            Friends f = shopTiere.get(i);
-            if (f != null) {
-                System.out.println("[" + i + "]: " + f.getName() + " (L:" + f.getLeben() + ", S:" + f.getSchaden() + ")");
-            } else {
-                System.out.println("[" + i + "]: leer");
-            }
-        }
-        System.out.println("Essen:");
-        List<Essen> shopEssen = shopBackend.getShopEssen();
-        for (int i = 0; i < shopEssen.size(); i++) {
-            Essen e = shopEssen.get(i);
-            if (e != null) {
-                System.out.println("[" + i + "]: Essen (+L:" + e.getLebensEffekt() + ", +S:" + e.getSchadensEffekt() + ")");
-            } else {
-                System.out.println("[" + i + "]: leer");
-            }
-        }
+        shopBackend.printShopStatus();
     }
 
     private void printTeamStatus() {
