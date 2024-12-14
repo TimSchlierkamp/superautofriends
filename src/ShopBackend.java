@@ -143,6 +143,10 @@ public class ShopBackend {
         return leben;
     }
 
+    public void setRunde(int runde) {
+        this.runde = runde;
+    }
+
     public int getRunde() {
         return runde;
     }
@@ -208,29 +212,52 @@ public class ShopBackend {
         System.out.println("Leben: " + leben);
         System.out.println("Runde: " + runde);
         System.out.println("Wins: " + wins);
+
+        System.out.println("Shop-Tiere:");
+        for (int i = 0; i < shopTiere.size(); i++) {
+            Friends f = shopTiere.get(i);
+            String status = shopTiereGefroren.get(i) ? " (Eingefroren)" : "";
+            if (f != null) {
+                System.out.println("[" + i + "]: " + f.getName() + " (L:" + f.getLeben() + ", S:" + f.getSchaden() + ")" + status);
+            } else {
+                System.out.println("[" + i + "]: leer" + status);
+            }
+        }
+
+        System.out.println("Shop-Essen:");
+        for (int i = 0; i < shopEssen.size(); i++) {
+            Essen e = shopEssen.get(i);
+            String status = shopEssenGefroren.get(i) ? " (Eingefroren)" : "";
+            if (e != null) {
+                System.out.println("[" + i + "]: Essen (+L:" + e.getLebensEffekt() + ", +S:" + e.getSchadensEffekt() + ")" + status);
+            } else {
+                System.out.println("[" + i + "]: leer" + status);
+            }
+        }
+
         System.out.println("Team:");
         for (int i = 0; i < team.size(); i++) {
             Friends f = team.get(i);
             System.out.println("[" + i + "]: " + f.getName() + " (L:" + f.getLeben() + ", S:" + f.getSchaden() + ")");
         }
-        System.out.println("Shop-Tiere:");
-        for (int i = 0; i < shopTiere.size(); i++) {
-            Friends f = shopTiere.get(i);
-            if (f != null) {
-                System.out.println("[" + i + "]: " + f.getName() + " (L:" + f.getLeben() + ", S:" + f.getSchaden() + ")");
-            } else {
-                System.out.println("[" + i + "]: leer");
-            }
-        }
-        System.out.println("Shop-Essen:");
-        for (int i = 0; i < shopEssen.size(); i++) {
-            Essen e = shopEssen.get(i);
-            if (e != null) {
-                System.out.println("[" + i + "]: Essen (+L:" + e.getLebensEffekt() + ", +S:" + e.getSchadensEffekt() + ")");
-            } else {
-                System.out.println("[" + i + "]: leer");
-            }
-        }
+
         System.out.println("---------------------------------");
+    }
+
+
+    public void updateShop(List<Friends> newTiere, List<Essen> newEssen) {
+        // Aktualisiere nur nicht-gefrorene Shop-Tiere
+        for (int i = 0; i < shopTiere.size(); i++) {
+            if (!shopTiereGefroren.get(i)) {
+                shopTiere.set(i, i < newTiere.size() ? newTiere.get(i) : generateRandomFriend());
+            }
+        }
+        // Aktualisiere nur nicht-gefrorene Shop-Essen
+        for (int i = 0; i < shopEssen.size(); i++) {
+            if (!shopEssenGefroren.get(i)) {
+                shopEssen.set(i, i < newEssen.size() ? newEssen.get(i) : generateRandomEssen());
+            }
+        }
+        System.out.println("Shop für neue Runde aktualisiert!");
     }
 }

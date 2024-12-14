@@ -106,8 +106,9 @@ public class Cli {
 
                 // Nach Kampf wieder in BUY für nächste Runde
                 networkLobbyManager.resetBuyPhaseDone();
-                shopBackend = new ShopBackend(shopBackend.getGold(), shopBackend.getLeben(), shopBackend.getRunde() + 1, shopBackend.getWins());
-                shopBackend.setGold(10);
+                shopBackend.setGold(10); // Reset Gold
+                shopBackend.setRunde(shopBackend.getRunde() + 1); // Erhöhe Runde
+                shopBackend.updateShop(generateNewTiere(), generateNewEssen());
 
                 // Neue Items für nächste Runde
                 shopBackend.setShopTiere(generateNewTiere());
