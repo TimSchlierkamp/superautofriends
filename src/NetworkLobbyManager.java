@@ -43,6 +43,9 @@ public class NetworkLobbyManager {
         waitForUpdate();
         System.out.println("Host: Lobby-State vom Client empfangen.");
         printLobbyState();
+
+        // Host setzt seinen Ready-Status auf true
+        setPlayerReady(playerName, true);
     }
 
     /**
@@ -77,19 +80,26 @@ public class NetworkLobbyManager {
      * Setzt einen Spieler auf ready und synchronisiert mit der Gegenstelle.
      */
     public void setPlayerReady(String playerName, boolean ready) throws IOException {
+        boolean playerFound = false;
         for (PlayerState p : state.players) {
             if (p.getPlayerName().equals(playerName)) {
                 p.setReady(ready);
+                playerFound = true;
+                break;
             }
         }
-        // Falls WAITING und >=2 ready -> wechsle auf BUY
+        if (!playerFound) {
+            System.out.println("Warnung: Spieler '" + playerName + "' nicht in der Lobby gefunden.");
+        }
+
+        // Überprüfen, ob alle Spieler bereit sind
         if (state.gamePhase.equals("WAITING")) {
-            int readyCount = countReadyPlayers();
-            if (readyCount >= 2 && allPlayersReady()) {
+            if (allPlayersReady()) {
                 state.gamePhase = "BUY";
                 System.out.println("Lobby: Alle Spieler sind bereit. Spielphase auf 'BUY' gesetzt.");
             }
         }
+
         sendState();
         System.out.println("Lobby: Player ready aktualisiert und State gesendet.");
         printLobbyState();
