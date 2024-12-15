@@ -21,7 +21,7 @@ public class NetworkLobbyManager {
         // Initialer State
         List<PlayerState> players = new ArrayList<>();
         PlayerState p = new PlayerState(playerName);
-        p.setReady(false);
+        p.setReady(true);
         p.setBuyPhaseDone(false);
         this.state = new LobbyState(players, playerName, "WAITING");
         this.state.players.add(p);
@@ -68,7 +68,7 @@ public class NetworkLobbyManager {
 
         // Füge unseren Spieler hinzu und sende aktualisierten State zurück
         PlayerState p = new PlayerState(playerName);
-        p.setReady(false);
+        p.setReady(true);
         p.setBuyPhaseDone(false);
         state.players.add(p);
         System.out.println("Client: Füge Spieler '" + playerName + "' zur Lobby hinzu.");
@@ -122,39 +122,6 @@ public class NetworkLobbyManager {
             if (!p.isReady()) return false;
         }
         return true;
-    }
-
-    private int countReadyPlayers() {
-        int count = 0;
-        for (PlayerState p : state.players) {
-            if (p.isReady()) count++;
-        }
-        return count;
-    }
-
-    public String getCurrentTurn() {
-        return state.turn;
-    }
-
-    public void nextTurn() throws IOException {
-        if (!state.players.isEmpty()) {
-            int currentIndex = -1;
-            for (int i = 0; i < state.players.size(); i++) {
-                if (state.players.get(i).getPlayerName().equals(state.turn)) {
-                    currentIndex = i;
-                    break;
-                }
-            }
-            int nextIndex = (currentIndex + 1) % state.players.size();
-            state.turn = state.players.get(nextIndex).getPlayerName();
-            System.out.println("Lobby: Nächster Zug von '" + state.turn + "'.");
-        }
-        sendState();
-        printLobbyState();
-    }
-
-    public boolean isMyTurn(String playerName) {
-        return getCurrentTurn().equals(playerName);
     }
 
     public String getGamePhase() {

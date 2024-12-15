@@ -5,8 +5,8 @@ public class PlayerState {
 
     public PlayerState(String playerName) {
         this.playerName = playerName;
-        this.ready = false;
-        this.buyPhaseDone = false;
+        this.ready = true;
+        this.buyPhaseDone = true;
     }
 
     public String getPlayerName() {

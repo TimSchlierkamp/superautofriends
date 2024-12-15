@@ -70,11 +70,6 @@ public class LobbyManager {
         writeLobbyState(state);
     }
 
-    public boolean allPlayersReady() throws IOException {
-        LobbyState state = readLobbyState();
-        return allPlayersReady(state);
-    }
-
     private boolean allPlayersReady(LobbyState state) {
         if (state.players.isEmpty()) return false;
         for (PlayerState p : state.players) {
