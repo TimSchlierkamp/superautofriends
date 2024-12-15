@@ -244,7 +244,6 @@ public class ShopBackend {
         System.out.println("---------------------------------");
     }
 
-
     public void updateShop(List<Friends> newTiere, List<Essen> newEssen) {
         // Aktualisiere nur nicht-gefrorene Shop-Tiere
         for (int i = 0; i < shopTiere.size(); i++) {

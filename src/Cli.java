@@ -40,7 +40,7 @@ public class Cli {
                 System.out.print("Auf welchem Port soll gehostet werden? ");
                 int port = Integer.parseInt(scanner.nextLine());
                 networkLobbyManager.lobbyHost(port, playerName);
-            } else {
+            } else if (role.equalsIgnoreCase("c")) {
                 System.out.print("Bitte IP des Hosts eingeben: ");
                 String hostIP = scanner.nextLine();
                 System.out.print("Bitte Port des Hosts eingeben: ");
@@ -75,15 +75,12 @@ public class Cli {
                 }
 
                 // Jede Runde Gold zurücksetzen
-                shopBackend.setGold(10);
-                System.out.println("Aktuelle Runde: " + shopBackend.getRunde() + " | Gold: " + shopBackend.getGold() +
-                                   " | Leben: " + shopBackend.getLeben() + " | Wins: " + shopBackend.getWins());
+//                shopBackend.setGold(10);
 
                 startBuyPhase();
 
                 if (shopBackend.getTeam().isEmpty()) {
                     System.out.println("Keine Tiere im Team! Spiel Ende.");
-                    running = false;
                     break;
                 }
 
