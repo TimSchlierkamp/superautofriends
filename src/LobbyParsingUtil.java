@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class LobbyParsingUtil {
-    public static LobbyState parseLobbyState(String content) {
+    public static LobbyState parseLobbyState(String content, String ownPlayerName, LobbyState currentState) {
         String trimmed = content.trim();
         int ps = trimmed.indexOf("\"players\":");
         int start = trimmed.indexOf("[", ps);
@@ -15,7 +15,16 @@ class LobbyParsingUtil {
                 String pe = e.trim();
                 if (!pe.startsWith("{")) pe = "{" + pe;
                 if (!pe.endsWith("}")) pe = pe + "}";
-                players.add(parsePlayer(pe));
+                PlayerState parsedPlayer = parsePlayer(pe);
+                if (parsedPlayer.getPlayerName().equals(ownPlayerName)) {
+                    // Bewahren Sie die lokalen Flags
+                    PlayerState localPlayer = findPlayerInState(currentState, ownPlayerName);
+                    if (localPlayer != null) {
+                        parsedPlayer.setBuyPhaseDone(localPlayer.isBuyPhaseDone());
+                        parsedPlayer.setReady(localPlayer.isReady());
+                    }
+                }
+                players.add(parsedPlayer);
             }
         }
 
@@ -25,6 +34,15 @@ class LobbyParsingUtil {
         System.out.println("Parsed LobbyState: gamePhase=" + gamePhase + ", turn=" + turn + ", players=" + players.size());
 
         return new LobbyState(players, turn, gamePhase);
+    }
+
+    private static PlayerState findPlayerInState(LobbyState state, String playerName) {
+        for (PlayerState p : state.players) {
+            if (p.getPlayerName().equals(playerName)) {
+                return p;
+            }
+        }
+        return null;
     }
 
     private static PlayerState parsePlayer(String json) {

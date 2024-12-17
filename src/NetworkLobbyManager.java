@@ -12,12 +12,14 @@ public class NetworkLobbyManager {
     private LobbyState state;
 
     private boolean isHost;
+    private String ownPlayerName; // Neuer Feld
 
     /**
      * Host-Funktionalität: Startet einen ServerSocket und wartet auf einen Client.
      */
     public void lobbyHost(int port, String playerName) throws IOException {
         isHost = true;
+        this.ownPlayerName = playerName; // Setzen des eigenen Spielernamens
         // Initialer State
         List<PlayerState> players = new ArrayList<>();
         PlayerState p = new PlayerState(playerName);
@@ -26,7 +28,7 @@ public class NetworkLobbyManager {
         this.state = new LobbyState(players, playerName, "WAITING");
         this.state.players.add(p);
 
-        System.out.println("Host: Starten des Lobby-Hosts mit Spielername '" + playerName + "'.");
+        System.out.println("Host: Starten des Lobby-Hosts mit Spielernamen '" + playerName + "'.");
         ServerSocket server = new ServerSocket(port);
         System.out.println("Host: Warte auf Verbindung des anderen Spielers auf Port " + port + "...");
         this.socket = server.accept();
@@ -53,6 +55,7 @@ public class NetworkLobbyManager {
      */
     public void lobbyJoin(String hostAddress, int port, String playerName) throws IOException {
         isHost = false;
+        this.ownPlayerName = playerName; // Setzen des eigenen Spielernamens
         System.out.println("Client: Versuche, eine Verbindung zum Host " + hostAddress + ":" + port + " herzustellen...");
         this.socket = new Socket(hostAddress, port);
         System.out.println("Client: Mit Host verbunden!");
@@ -152,6 +155,22 @@ public class NetworkLobbyManager {
         System.out.println("Lobby: BuyPhaseDone für alle Spieler zurückgesetzt und State gesendet.");
         printLobbyState();
     }
+    /**
+     * Aktualisiert das eigene Team im LobbyState und sendet den State.
+     */
+    public void updateOwnTeam(List<FriendData> team) throws IOException {
+        for (PlayerState p : state.players) {
+            if (p.getPlayerName().equals(this.ownPlayerName)) {
+                p.setTeam(team);
+                break;
+            }
+        }
+        sendState();
+    }
+    public LobbyState getState() {
+        return state;
+    }
+    
 
     /**
      * Wartet auf ein Update des Lobby-States von der Gegenstelle.
@@ -168,7 +187,7 @@ public class NetworkLobbyManager {
     /**
      * Sendet den aktuellen Lobby-State an die Gegenstelle.
      */
-    private void sendState() throws IOException {
+    void sendState() throws IOException {
         String stateStr = stateToString(state);
         out.write(stateStr + "\n");
         out.flush();
@@ -178,7 +197,7 @@ public class NetworkLobbyManager {
      * Parsen des Lobby-States von einem JSON-ähnlichen String.
      */
     private LobbyState parseState(String content) {
-        return LobbyParsingUtil.parseLobbyState(content);
+        return LobbyParsingUtil.parseLobbyState(content, this.ownPlayerName, this.state);
     }
 
     /**

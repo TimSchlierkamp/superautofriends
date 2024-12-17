@@ -1,0 +1,5 @@
+{
+"players":[{"playerName":"Starvinci","ready":true,"buyPhaseDone":false}],
+"turn":"Starvinci",
+"gamePhase":"WAITING"
+}

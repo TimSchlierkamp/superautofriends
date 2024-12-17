@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -12,7 +13,6 @@ public class Cli {
         this.shopBackend = new ShopBackend(10, 10, 1, 0);
         this.scanner = new Scanner(System.in);
         this.networkLobbyManager = new NetworkLobbyManager();
-
         // Initiale Shop Items
         List<Friends> initialTiere = new ArrayList<>();
         initialTiere.add(generateDemoFriend("Schlierie"));
@@ -63,6 +63,32 @@ public class Cli {
         }
     }
 
+    private void synchronizeTeams() throws IOException {
+        // Aktualisiere den eigenen PlayerState mit dem aktuellen Team
+        List<FriendData> currentTeamData = new ArrayList<>();
+        for (Friends f : shopBackend.getTeam()) {
+            currentTeamData.add(new FriendData(f.getName(), f.getLeben(), f.getSchaden()));
+        }
+        networkLobbyManager.updateOwnTeam(currentTeamData);
+
+        // Sende den aktualisierten Lobby-State
+        networkLobbyManager.sendState();
+
+        // Warte auf den aktualisierten Lobby-State von der Gegenstelle
+        networkLobbyManager.waitForUpdate();
+    }
+
+    private List<FriendData> getEnemyTeam() {
+        List<FriendData> enemyTeam = new ArrayList<>();
+        for (PlayerState p : networkLobbyManager.getState().getPlayers()) {
+            if (!p.getPlayerName().equals(playerName)) {
+                enemyTeam = p.getTeam();
+                break;
+            }
+        }
+        return enemyTeam;
+    }
+
     public void run() {
         System.out.println("Willkommen in der Super Auto Pets CLI!");
         boolean running = true;
@@ -75,7 +101,7 @@ public class Cli {
                 }
 
                 // Jede Runde Gold zurücksetzen
-//                shopBackend.setGold(10);
+                shopBackend.setGold(10);
 
                 startBuyPhase();
 
@@ -84,9 +110,13 @@ public class Cli {
                     break;
                 }
 
+                // Nach Kaufphase: Synchronisiere Teams
+                synchronizeTeams();
+
                 // Kaufphase beendet
                 networkLobbyManager.setPlayerBuyPhaseDone(playerName, true);
                 System.out.println("Warte, bis alle Spieler ihre Kaufphase beendet haben...");
+
                 while (!networkLobbyManager.allBuyPhaseDone()) {
                     networkLobbyManager.waitForUpdate();
                     Thread.sleep(500);
@@ -99,7 +129,10 @@ public class Cli {
                     Thread.sleep(500);
                 }
 
-                startFightPhase(generateEnemyTeam());
+                // Holen Sie sich das gegnerische Team
+                List<FriendData> enemyTeam = getEnemyTeam();
+
+                startFightPhase(enemyTeam);
 
                 // Nach Kampf wieder in BUY für nächste Runde
                 networkLobbyManager.resetBuyPhaseDone();
@@ -127,6 +160,30 @@ public class Cli {
         }
         System.out.println("Spiel beendet. Auf Wiedersehen!");
     }
+
+    private void startFightPhase(List<FriendData> enemyTeamData) {
+        System.out.println("----- KAMPFPHASE -----");
+
+        // Konvertiere FriendData zu Friends-Objekten
+        List<Friends> enemyTeam = new ArrayList<>();
+        for (FriendData fd : enemyTeamData) {
+            enemyTeam.add(new GenericFriend(fd.getName(), fd.getLeben(), fd.getSchaden(), "Kein Effekt"));
+        }
+
+        FightBackend fightBackend = new FightBackend(shopBackend.getTeam(), enemyTeam);
+        String result = fightBackend.startFight();
+        System.out.println("Kampfergebnis: " + result);
+        if (result.equals("A gewinnt")) {
+            shopBackend.setWins(shopBackend.getWins() + 1);
+            System.out.println("Sie haben gewonnen! Wins: " + shopBackend.getWins());
+        } else if (result.equals("B gewinnt")) {
+            shopBackend.setLeben(shopBackend.getLeben() - 1);
+            System.out.println("Sie haben verloren! Leben: " + shopBackend.getLeben());
+        } else {
+            System.out.println("Das Spiel endet unentschieden!");
+        }
+    }
+    
 
     private void startBuyPhase() {
         System.out.println("----- KAUFPHASE -----");
@@ -182,22 +239,7 @@ public class Cli {
         }
     }
 
-    private void startFightPhase(List<Friends> enemyTeam) {
-        System.out.println("----- KAMPFPHASE -----");
-        FightBackend fightBackend = new FightBackend(shopBackend.getTeam(), enemyTeam);
-        String result = fightBackend.startFight();
-        System.out.println("Kampfergebnis: " + result);
-        if (result.equals("A gewinnt")) {
-            shopBackend = new ShopBackend(shopBackend.getGold(), shopBackend.getLeben(), shopBackend.getRunde(), shopBackend.getWins() + 1);
-            System.out.println("Sie haben gewonnen! Wins: " + shopBackend.getWins());
-        } else if (result.equals("B gewinnt")) {
-            shopBackend = new ShopBackend(shopBackend.getGold(), shopBackend.getLeben() - 1, shopBackend.getRunde(), shopBackend.getWins());
-            System.out.println("Sie haben verloren! Leben: " + shopBackend.getLeben());
-        } else {
-            System.out.println("Das Spiel endet unentschieden!");
-        }
-    }
-
+    
     private void printShopStatus() {
         shopBackend.printShopStatus();
     }

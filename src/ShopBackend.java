@@ -75,6 +75,23 @@ public class ShopBackend {
         shopTiere.set(index, null);
         System.out.println("Gekauftes Tier: " + chosenFriend.getName() + ". Gold verbleibend: " + gold);
     }
+     /**
+     * Setzt den aktuellen Lebenswert.
+     * @param leben Der neue Lebenswert.
+     */
+    public void setLeben(int leben) {
+        this.leben = leben;
+        System.out.println("Leben gesetzt auf: " + this.leben);
+    }
+
+    /**
+     * Setzt die Anzahl der Siege.
+     * @param wins Die neue Anzahl der Siege.
+     */
+    public void setWins(int wins) {
+        this.wins = wins;
+        System.out.println("Wins gesetzt auf: " + this.wins);
+    }
 
     public void sellFriend(int index) {
         if (index < 0 || index >= team.size()) {
